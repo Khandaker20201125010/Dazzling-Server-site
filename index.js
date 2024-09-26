@@ -37,8 +37,15 @@ async function run() {
     // await client.db("admin").command({ ping: 1 });
 
     const productCollection = client.db("DazzlingDB").collection("product");
+    const reviewCollection = client.db("DazzlingDB").collection("reviews");
     app.get('/product',async(req,res) =>{
-        const result = await productCollection.find().toArray();
+        const page = parseInt(req.query.page);
+        const size = parseInt(req.query.size);
+        const result = await productCollection.find().skip(page * size).limit(size).toArray();
+        res.send(result)
+    })
+    app.get('/reviews',async(req,res) =>{
+        const result = await reviewCollection.find().toArray();
         res.send(result)
     })
     
