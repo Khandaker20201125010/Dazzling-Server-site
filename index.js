@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const port = process.env.PORT || 5500 ;
+const port = process.env.PORT || 5500;
 require('dotenv').config()
 
 
@@ -17,7 +17,7 @@ app.use(express.json());
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.texsw4y.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -38,17 +38,37 @@ async function run() {
 
     const productCollection = client.db("DazzlingDB").collection("product");
     const reviewCollection = client.db("DazzlingDB").collection("reviews");
-    app.get('/product',async(req,res) =>{
-        const page = parseInt(req.query.page);
-        const size = parseInt(req.query.size);
-        const result = await productCollection.find().skip(page * size).limit(size).toArray();
-        res.send(result)
+    const cartsCollection = client.db("DazzlingDB").collection("carts");
+
+    //product section
+    app.get('/product', async (req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      const result = await productCollection.find().skip(page * size).limit(size).toArray();
+      res.send(result)
     })
-    app.get('/reviews',async(req,res) =>{
-        const result = await reviewCollection.find().toArray();
-        res.send(result)
+    app.get('/reviews', async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.send(result)
     })
-    
+    app.get('/product/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollection.findOne(query);
+      res.send(result);
+    });
+    //carts section 
+    app.get('/carts', async (req, res) => {
+      const result = await cartsCollection.find().toArray();
+      res.send(result)
+    })
+
+    app.post('/carts', async (req, res) => {
+      const carItem = req.body;
+      const result = await cartsCollection.insertOne(carItem);
+      res.send(result);
+    })
+
 
 
 
@@ -63,9 +83,9 @@ async function run() {
 run().catch(console.dir);
 
 
-app.get('/',(req , res) => {
-    res.send('Dazzeling is Selling')
+app.get('/', (req, res) => {
+  res.send('Dazzeling is Selling')
 })
-app.listen(port,() => {
-    console.log(`Dazzling is running ${port}`);
+app.listen(port, () => {
+  console.log(`Dazzling is running ${port}`);
 })
