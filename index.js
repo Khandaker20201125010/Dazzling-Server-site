@@ -59,13 +59,21 @@ async function run() {
     });
     //carts section 
     app.get('/carts', async (req, res) => {
-      const result = await cartsCollection.find().toArray();
+      const email = req.query.email;
+      const query = { email: email}
+      const result = await cartsCollection.find(query).toArray();
       res.send(result)
     })
 
     app.post('/carts', async (req, res) => {
       const carItem = req.body;
       const result = await cartsCollection.insertOne(carItem);
+      res.send(result);
+    })
+    app.delete('/carts/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartsCollection.deleteOne(query);
       res.send(result);
     })
 
