@@ -39,6 +39,24 @@ async function run() {
     const productCollection = client.db("DazzlingDB").collection("product");
     const reviewCollection = client.db("DazzlingDB").collection("reviews");
     const cartsCollection = client.db("DazzlingDB").collection("carts");
+    const usersCollection = client.db("DazzlingDB").collection("users");
+
+
+
+    //users section
+    app.get('/users', async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email}
+      const result = await usersCollection.findOne(query);
+      res.send(result)
+    
+    })
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
+
 
     //product section
     app.get('/product', async (req, res) => {
