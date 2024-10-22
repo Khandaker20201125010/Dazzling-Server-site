@@ -45,9 +45,7 @@ async function run() {
 
     //users section
     app.get('/users', async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email}
-      const result = await usersCollection.findOne(query);
+      const result = await usersCollection.find().toArray();
       res.send(result)
     
     })
@@ -61,6 +59,13 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
+    app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    })
+    
 
 
     //product section
