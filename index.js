@@ -47,14 +47,14 @@ async function run() {
     app.get('/users', async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result)
-    
+
     })
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user.email }
       const existsUser = await usersCollection.findOne(query);
-      if(existsUser){
-        return res.send ({message: 'user already exist',insertedId: null})
+      if (existsUser) {
+        return res.send({ message: 'user already exist', insertedId: null })
       }
       const result = await usersCollection.insertOne(user);
       res.send(result);
@@ -65,7 +65,25 @@ async function run() {
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     })
+    app.patch('/users/role/:id', async (req, res) => {
+      const id = req.params.id;
+      const { role } = req.body; // Capture the role from the request body
+  
+      const filter = { _id: new ObjectId(id) };
+  
+      // If the role is being set to 'Admin', handle the admin reassignment logic
     
+  
+      // Update the user's role
+      const updatedDoc = {
+          $set: {
+              role: role // Set the new role
+          }
+      };
+  
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+  });
 
 
     //product section
@@ -88,7 +106,7 @@ async function run() {
     //carts section 
     app.get('/carts', async (req, res) => {
       const email = req.query.email;
-      const query = { email: email}
+      const query = { email: email }
       const result = await cartsCollection.find(query).toArray();
       res.send(result)
     })
