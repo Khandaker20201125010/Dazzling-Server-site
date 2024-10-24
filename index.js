@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5500;
 require('dotenv').config()
 
@@ -41,10 +42,31 @@ async function run() {
     const cartsCollection = client.db("DazzlingDB").collection("carts");
     const usersCollection = client.db("DazzlingDB").collection("users");
 
+    //jwt section
+    app.post('/jwt', (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
+      res.send({ token })
+    })
 
+    //jwt middleware
+    const verifyToken= (req, res, next) => {
+     
+      if(req.headers.authorization){
+        return res.status(401).send({ message:'unauthorized access'})
+      }
+      const token  = req.headers.authorization.split (' ')[1];
+     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(error, decoded) {
+       if(error){
+         return res.status(401).send({ message:'unauthorized access'})
+       }
+       req.decoded = decoded;
+       next();
+     })
+    }
 
     //users section
-    app.get('/users', async (req, res) => {
+    app.get('/users',verifyToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result)
 
