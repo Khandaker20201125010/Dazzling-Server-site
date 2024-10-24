@@ -52,7 +52,7 @@ async function run() {
     //jwt middleware
     const verifyToken= (req, res, next) => {
      
-      if(req.headers.authorization){
+      if(!req.headers.authorization){
         return res.status(401).send({ message:'unauthorized access'})
       }
       const token  = req.headers.authorization.split (' ')[1];
