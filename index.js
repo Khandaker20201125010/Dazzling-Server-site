@@ -50,26 +50,37 @@ async function run() {
     })
 
     // middlewares 
+    //verify jwt
     const verifyToken = (req, res, next) => {
       console.log('inside verify token', req.headers.authorization);
       if (!req.headers.authorization) {
-        return res.status(401).send({ message: 'unauthorized access' });
+        return res.status(401).send({ message: 'Forbidden access' });
       }
       const token = req.headers.authorization.split(' ')[1];
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
         if (err) {
-          return res.status(401).send({ message: 'unauthorized access' })
+          return res.status(401).send({ message: 'Forbidden access' })
         }
         req.decoded = decoded;
         next();
       })
     }
-
+     //verify admin
+     const verifyAdmin = async (req, res, next) => {
+       const email = req.decoded.email;
+       const query = { email: email };
+       const user = await usersCollection.findOne(query);
+       const isAdmin = user?.role === 'Admin';
+       if(!isAdmin){
+        return res.status(403).send({message: 'Forbidden access'})
+     }
+     next();
+    }
 
 
 
     //users section
-    app.get('/users', verifyToken, async (req, res) => {
+    app.get('/users', verifyToken,verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result)
 
@@ -84,11 +95,11 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
-    app.get('/users/role/:email', verifyToken, async (req, res) => {
+    app.get('/users/role/:email', verifyToken,verifyAdmin, async (req, res) => {
       const email = req.params.email;
 
       if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' })
+        return res.status(403).send({ message: 'Forbidden access' })
       }
 
       const query = { email: email };
@@ -99,11 +110,7 @@ async function run() {
       }
       res.send({ admin });
     })
-
-
-
-
-    app.delete('/users/:id', async (req, res) => {
+    app.delete('/users/:id',verifyToken,verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
@@ -112,19 +119,12 @@ async function run() {
     app.patch('/users/role/:id', async (req, res) => {
       const id = req.params.id;
       const { role } = req.body; // Capture the role from the request body
-
       const filter = { _id: new ObjectId(id) };
-
-      // If the role is being set to 'Admin', handle the admin reassignment logic
-
-
-      // Update the user's role
       const updatedDoc = {
         $set: {
           role: role // Set the new role
         }
       };
-
       const result = await usersCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
