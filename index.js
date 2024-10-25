@@ -43,49 +43,37 @@ async function run() {
     const usersCollection = client.db("DazzlingDB").collection("users");
 
     //jwt section
-    app.post('/jwt', (req, res) => {
+    app.post('/jwt', async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
-      res.send({ token })
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      res.send({ token });
     })
 
-    //jwt middleware
-    const verifyToken= (req, res, next) => {
-     
-      if(!req.headers.authorization){
-        return res.status(401).send({ message:'unauthorized access'})
+    // middlewares 
+    const verifyToken = (req, res, next) => {
+      console.log('inside verify token', req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: 'unauthorized access' });
       }
-      const token  = req.headers.authorization.split (' ')[1];
-     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(error, decoded) {
-       if(error){
-         return res.status(401).send({ message:'unauthorized access'})
-       }
-       req.decoded = decoded;
-       next();
-     })
+      const token = req.headers.authorization.split(' ')[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({ message: 'unauthorized access' })
+        }
+        req.decoded = decoded;
+        next();
+      })
     }
 
+
+
+
     //users section
-    app.get('/users',verifyToken, async (req, res) => {
+    app.get('/users', verifyToken, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result)
 
     })
-    
-    app.get('/users/admin/:email',verifyToken, async (req, res) => {
-        const email = req.params.email;
-        if(email !== req.decoded.email){
-         return res.status(403).send({message: 'forbidden access'})
-        }
-        const query = {email: email};
-        const user = await usersCollection.findOne(query);
-        let admin = false;
-        if (user){
-          admin = user.role === 'admin';
-        }
-        res.send({admin})
-    })
-
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user.email }
@@ -96,6 +84,25 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
+    app.get('/users/role/:email', verifyToken, async (req, res) => {
+      const email = req.params.email;
+
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      let admin = false;
+      if (user) {
+        admin = user?.role === 'Admin';
+      }
+      res.send({ admin });
+    })
+
+
+
+
     app.delete('/users/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -105,22 +112,22 @@ async function run() {
     app.patch('/users/role/:id', async (req, res) => {
       const id = req.params.id;
       const { role } = req.body; // Capture the role from the request body
-  
+
       const filter = { _id: new ObjectId(id) };
-  
+
       // If the role is being set to 'Admin', handle the admin reassignment logic
-    
-  
+
+
       // Update the user's role
       const updatedDoc = {
-          $set: {
-              role: role // Set the new role
-          }
+        $set: {
+          role: role // Set the new role
+        }
       };
-  
+
       const result = await usersCollection.updateOne(filter, updatedDoc);
       res.send(result);
-  });
+    });
 
 
     //product section
