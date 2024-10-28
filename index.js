@@ -45,7 +45,7 @@ async function run() {
     //jwt section
     app.post('/jwt', async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' });
       res.send({ token });
     })
 
@@ -95,7 +95,7 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
-    app.get('/users/role/:email', verifyToken,verifyAdmin, async (req, res) => {
+    app.get('/users/admin/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
 
       if (email !== req.decoded.email) {
@@ -116,7 +116,7 @@ async function run() {
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     })
-    app.patch('/users/role/:id', async (req, res) => {
+    app.patch('/users/admin/:id',verifyToken,verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const { role } = req.body; // Capture the role from the request body
       const filter = { _id: new ObjectId(id) };
@@ -148,6 +148,12 @@ async function run() {
       res.send(result);
     });
     //carts section 
+   
+    app.post('/carts', async (req, res) => {
+      const carItem = req.body;
+      const result = await cartsCollection.insertOne(carItem);
+      res.send(result);
+    })
     app.get('/carts', async (req, res) => {
       const email = req.query.email;
       const query = { email: email }
@@ -155,11 +161,6 @@ async function run() {
       res.send(result)
     })
 
-    app.post('/carts', async (req, res) => {
-      const carItem = req.body;
-      const result = await cartsCollection.insertOne(carItem);
-      res.send(result);
-    })
     app.delete('/carts/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
