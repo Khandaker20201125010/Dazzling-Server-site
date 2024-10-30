@@ -52,7 +52,6 @@ async function run() {
     // middlewares 
     //verify jwt
     const verifyToken = (req, res, next) => {
-      console.log('inside verify token', req.headers.authorization);
       if (!req.headers.authorization) {
         return res.status(401).send({ message: 'Forbidden access' });
       }
@@ -137,16 +136,20 @@ async function run() {
       const result = await productCollection.find().skip(page * size).limit(size).toArray();
       res.send(result)
     })
-    app.get('/reviews', async (req, res) => {
-      const result = await reviewCollection.find().toArray();
-      res.send(result)
-    })
+   
     app.get('/product/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productCollection.findOne(query);
       res.send(result);
     });
+    app.post('/product', async (req, res) => {
+      const item = req.body;
+      const result = await productCollection.insertOne(item);
+      res.send(result);
+    })
+   
+
     //carts section 
    
     app.post('/carts', async (req, res) => {
@@ -168,6 +171,11 @@ async function run() {
       res.send(result);
     })
 
+    //reviews section
+    app.get('/reviews', async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.send(result)
+    })
 
 
 
