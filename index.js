@@ -148,6 +148,26 @@ async function run() {
       const result = await productCollection.insertOne(item);
       res.send(result);
     })
+    app.patch('/product/:id', async (req, res) => {
+      const item = req.body;
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+         $set:{
+           name: item.name, // Referencing `item` instead of `data`
+           brand: item.brand,
+           price: item.price,
+           rating: item.rating,
+           quantity: item.quantity,
+           image: item.image,
+           reviews: item.reviews,
+           description: item.description,
+           category: item.category,
+         }
+      }
+      const result = await productCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+   });
     app.delete('/product/:id',verifyToken,verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
