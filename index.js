@@ -64,22 +64,21 @@ async function run() {
         next();
       })
     }
-     //verify admin
-     const verifyAdmin = async (req, res, next) => {
-       const email = req.decoded.email;
-       const query = { email: email };
-       const user = await usersCollection.findOne(query);
-       const isAdmin = user?.role === 'Admin';
-       if(!isAdmin){
-        return res.status(403).send({message: 'Forbidden access'})
-     }
-     next();
+    
+    //verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const isAdmin = user?.role === 'Admin';
+      if (!isAdmin) {
+        return res.status(403).send({ message: 'Forbidden access' })
+      }
+      next();
     }
 
-
-
     //users section
-    app.get('/users', verifyToken,verifyAdmin, async (req, res) => {
+    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result)
 
@@ -109,13 +108,13 @@ async function run() {
       }
       res.send({ admin });
     })
-    app.delete('/users/:id',verifyToken,verifyAdmin, async (req, res) => {
+    app.delete('/users/:id', verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
       res.send(result);
     })
-    app.patch('/users/admin/:id',verifyToken,verifyAdmin, async (req, res) => {
+    app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const { role } = req.body; // Capture the role from the request body
       const filter = { _id: new ObjectId(id) };
@@ -128,7 +127,6 @@ async function run() {
       res.send(result);
     });
 
-
     //product section
     app.get('/product', async (req, res) => {
       const page = parseInt(req.query.page);
@@ -136,14 +134,13 @@ async function run() {
       const result = await productCollection.find().skip(page * size).limit(size).toArray();
       res.send(result)
     })
-   
     app.get('/product/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productCollection.findOne(query);
       res.send(result);
     });
-    app.post('/product',verifyToken,verifyAdmin, async (req, res) => {
+    app.post('/product', verifyToken, verifyAdmin, async (req, res) => {
       const item = req.body;
       const result = await productCollection.insertOne(item);
       res.send(result);
@@ -153,22 +150,22 @@ async function run() {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
-         $set:{
-           name: item.name, // Referencing `item` instead of `data`
-           brand: item.brand,
-           price: item.price,
-           rating: item.rating,
-           quantity: item.quantity,
-           image: item.image,
-           reviews: item.reviews,
-           description: item.description,
-           category: item.category,
-         }
+        $set: {
+          name: item.name, // Referencing `item` instead of `data`
+          brand: item.brand,
+          price: item.price,
+          rating: item.rating,
+          quantity: item.quantity,
+          image: item.image,
+          reviews: item.reviews,
+          description: item.description,
+          category: item.category,
+        }
       }
       const result = await productCollection.updateOne(filter, updatedDoc);
       res.send(result);
-   });
-    app.delete('/product/:id',verifyToken,verifyAdmin, async (req, res) => {
+    });
+    app.delete('/product/:id', verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productCollection.deleteOne(query);
@@ -176,7 +173,7 @@ async function run() {
     })
 
     //carts section 
-   
+
     app.post('/carts', async (req, res) => {
       const carItem = req.body;
       const result = await cartsCollection.insertOne(carItem);
