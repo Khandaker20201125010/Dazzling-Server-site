@@ -41,6 +41,7 @@ async function run() {
     const reviewCollection = client.db("DazzlingDB").collection("reviews");
     const cartsCollection = client.db("DazzlingDB").collection("carts");
     const usersCollection = client.db("DazzlingDB").collection("users");
+    const shippingsCollection = client.db("DazzlingDB").collection("shippings");
 
     //jwt section
     app.post('/jwt', async (req, res) => {
@@ -170,7 +171,7 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await productCollection.deleteOne(query);
       res.send(result);
-    })
+    });
 
     //carts section 
 
@@ -178,27 +179,37 @@ async function run() {
       const carItem = req.body;
       const result = await cartsCollection.insertOne(carItem);
       res.send(result);
-    })
+    });
     app.get('/carts', async (req, res) => {
       const email = req.query.email;
       const query = { email: email }
       const result = await cartsCollection.find(query).toArray();
       res.send(result)
-    })
+    });
 
     app.delete('/carts/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await cartsCollection.deleteOne(query);
       res.send(result);
-    })
+    });
 
     //reviews section
     app.get('/reviews', async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result)
-    })
+    });
 
+    //shippings section
+    app.get('/shippings', async (req, res) => {
+      const result = await shippingsCollection.find().toArray();
+      res.send(result)
+    });
+    app.post('/shippings', async (req, res) => {
+      const shipping = req.body;
+      const result = await shippingsCollection.insertOne(shipping);
+      res.send(result);
+    })
 
 
 
