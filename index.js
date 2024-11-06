@@ -223,9 +223,9 @@ async function run() {
       const products = await cartsCollection.find({ email: body?.email }).toArray()
       const price = products.map(product => product?.price)
       const totalPrice = price?.reduce((sum, price) => sum + price, 0)
-      const amount = parseInt(totalPrice + body?.shippingMethod) 
+      const amount = parseInt(totalPrice + body?.shippingMethod)
       const tranId = new ObjectId().toString()
-       const data = {
+      const data = {
         total_amount: amount,
         currency: body?.currency,
         tran_id: tranId,
@@ -255,8 +255,8 @@ async function run() {
         ship_postcode: 1000,
         ship_country: 'Bangladesh',
       };
-   
-   
+
+
       const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
       sslcz.init(data).then(apiResponse => {
         // Redirect the user to payment gateway
@@ -271,17 +271,30 @@ async function run() {
         const result = orderCollection.insertOne(orderData)
       });
     })
-       // get all orders 
-       app.get('/order', async (req, res) => {
-        const result = await orderCollection.find().toArray()
-        res.send(result)
+    // get all orders 
+    app.get('/order', async (req, res) => {
+      const result = await orderCollection.find().toArray()
+      res.send(result)
     })
+   
+    // get orders by email
+    app.get('/order/:email', verifyToken, async (req, res) => {
+      const email = req.params.email;
+      
+      if (email !== req.decoded.email) {
+          return res.status(403).send({ message: 'Forbidden access' });
+      }
+      // Modify the query to find orders where the email is nested under `data.email`
+      const result = await orderCollection.find({ "data.email": email }).toArray();
+      res.send(result);
+  });
+  
 
     // get orders by transactionId 
     app.get('/order/or/:tranId', async (req, res) => {
-        const tranId = req.params.tranId
-        const result = await orderCollection.find({ transactionId: tranId }).toArray()
-        res.send(result)
+      const tranId = req.params.tranId
+      const result = await orderCollection.find({ transactionId: tranId }).toArray()
+      res.send(result)
     })
 
 
@@ -308,13 +321,13 @@ async function run() {
         res.redirect(`http://localhost:5173/payment/success/${tranId}`)
       }
     })
-      // order delete when payment faile 
-      app.post('/payment/fail/:tranId', async (req, res) => {
-        const tranId = req.params.tranId
-        const result = await orderCollection.deleteOne({ transactionId: tranId })
-        if (result.deletedCount) {
-            res.redirect(`http://localhost:5173/payment/fail/${tranId}`)
-        }
+    // order delete when payment faile 
+    app.post('/payment/fail/:tranId', async (req, res) => {
+      const tranId = req.params.tranId
+      const result = await orderCollection.deleteOne({ transactionId: tranId })
+      if (result.deletedCount) {
+        res.redirect(`http://localhost:5173/payment/fail/${tranId}`)
+      }
     })
 
 
