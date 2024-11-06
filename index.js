@@ -276,19 +276,28 @@ async function run() {
       const result = await orderCollection.find().toArray()
       res.send(result)
     })
-   
+    app.put('/order/:id', async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = { $set: { status } };
+
+      const result = await orderCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     // get orders by email
     app.get('/order/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
-      
+
       if (email !== req.decoded.email) {
-          return res.status(403).send({ message: 'Forbidden access' });
+        return res.status(403).send({ message: 'Forbidden access' });
       }
       // Modify the query to find orders where the email is nested under `data.email`
       const result = await orderCollection.find({ "data.email": email }).toArray();
       res.send(result);
-  });
-  
+    });
+
 
     // get orders by transactionId 
     app.get('/order/or/:tranId', async (req, res) => {
