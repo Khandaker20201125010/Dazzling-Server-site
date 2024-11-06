@@ -338,6 +338,29 @@ async function run() {
         res.redirect(`http://localhost:5173/payment/fail/${tranId}`)
       }
     })
+    //analytics or stats
+    app.get('/admin-stats',verifyToken,verifyAdmin, async (req, res) => {
+      const users = await usersCollection.estimatedDocumentCount();
+      const productItem = await productCollection.estimatedDocumentCount();
+      const orders = await orderCollection.estimatedDocumentCount();
+      const result = await orderCollection.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalRevenue: {
+              $sum: '$data.total'
+            } 
+          }
+        }
+      ]).toArray();
+      const revenue = result.length > 0 ? result[0].totalRevenue : 0;  
+      res.send({ 
+        users,
+        productItem,
+        orders,
+        revenue
+      })
+    })
 
 
 
