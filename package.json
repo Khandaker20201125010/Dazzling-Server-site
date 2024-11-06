@@ -16,6 +16,7 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.9.0",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "sslcommerz-lts": "^1.1.0"
   }
 }

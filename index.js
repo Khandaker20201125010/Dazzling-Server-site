@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const SSLCommerzPayment = require('sslcommerz-lts')
 const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5500;
 require('dotenv').config()
@@ -30,6 +31,10 @@ const client = new MongoClient(uri, {
   }
 });
 
+const store_id = process.env.STORE_ID
+const store_passwd = process.env.STORE_PASSWD
+const is_live = false //true for live, false for sandbox
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -42,6 +47,7 @@ async function run() {
     const cartsCollection = client.db("DazzlingDB").collection("carts");
     const usersCollection = client.db("DazzlingDB").collection("users");
     const shippingsCollection = client.db("DazzlingDB").collection("shippings");
+    const orderCollection = client.db("DazzlingDB").collection("order");
 
     //jwt section
     app.post('/jwt', async (req, res) => {
@@ -65,7 +71,7 @@ async function run() {
         next();
       })
     }
-    
+
     //verify admin
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
@@ -210,7 +216,106 @@ async function run() {
       const result = await shippingsCollection.insertOne(shipping);
       res.send(result);
     })
+    //sslcommerz section
 
+    app.post('/order', async (req, res) => {
+      const body = req.body
+      const products = await cartsCollection.find({ email: body?.email }).toArray()
+      const price = products.map(product => product?.price)
+      const totalPrice = price?.reduce((sum, price) => sum + price, 0)
+      const amount = parseInt(totalPrice + body?.shippingMethod) 
+      const tranId = new ObjectId().toString()
+       const data = {
+        total_amount: amount,
+        currency: body?.currency,
+        tran_id: tranId,
+        success_url: `http://localhost:5500/payment/success/${tranId}`,
+        fail_url: `http://localhost:5500/payment/fail/${tranId}`,
+        cancel_url: 'http://localhost:3030/cancel',
+        ipn_url: 'http://localhost:3030/ipn',
+        shipping_method: 'Courier',
+        product_name: 'Computer.',
+        product_category: 'Electronic',
+        product_profile: 'general',
+        cus_name: body.name,
+        cus_email: body.email,
+        cus_postcode: '1000',
+        cus_country: 'Bangladesh',
+        cus_phone: body.phone,
+        // cus_fax: '01711111111',
+        ship_name: body.name,
+        ship_add1: body.shippingArea,
+        // ship_add2: 'Dhaka',
+        ship_city: body.shippingArea,
+        // ship_state: 'Dhaka',
+        cus_add1: body.address,
+        // cus_add2: 'Dhaka',
+        // cus_city: 'Dhaka',
+        // cus_state: 'Dhaka',
+        ship_postcode: 1000,
+        ship_country: 'Bangladesh',
+      };
+   
+   
+      const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live)
+      sslcz.init(data).then(apiResponse => {
+        // Redirect the user to payment gateway
+        let GatewayPageURl = apiResponse.GatewayPageURL
+        res.send({ url: GatewayPageURl })
+        const orderData = {
+          data: body,
+          paidStatus: false,
+          status: 'pending',
+          transactionId: tranId
+        }
+        const result = orderCollection.insertOne(orderData)
+      });
+    })
+       // get all orders 
+       app.get('/order', async (req, res) => {
+        const result = await orderCollection.find().toArray()
+        res.send(result)
+    })
+
+    // get orders by transactionId 
+    app.get('/order/or/:tranId', async (req, res) => {
+        const tranId = req.params.tranId
+        const result = await orderCollection.find({ transactionId: tranId }).toArray()
+        res.send(result)
+    })
+
+
+    //payment
+    app.post('/payment/success/:tranId', async (req, res) => {
+      const tranId = req.params.tranId
+
+      const result = await orderCollection.updateOne({ transactionId: tranId }, {
+        $set: {
+          paidStatus: true
+        }
+      })
+      if (result.modifiedCount > 0) {
+        const order = await orderCollection.findOne({ transactionId: tranId });
+        if (order && order?.data?.productsIds) {
+          // Delete items from the cart collection
+          const query = {
+            _id: {
+              $in: order?.data?.productsIds.map(id => new ObjectId(id))
+            }
+          };
+          await cartsCollection.deleteMany(query);
+        }
+        res.redirect(`http://localhost:5173/payment/success/${tranId}`)
+      }
+    })
+      // order delete when payment faile 
+      app.post('/payment/fail/:tranId', async (req, res) => {
+        const tranId = req.params.tranId
+        const result = await orderCollection.deleteOne({ transactionId: tranId })
+        if (result.deletedCount) {
+            res.redirect(`http://localhost:5173/payment/fail/${tranId}`)
+        }
+    })
 
 
 
