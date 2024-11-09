@@ -140,6 +140,20 @@ async function run() {
       res.send(result);
     });
 
+    app.patch('/users/users/:id',verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const { photo } = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          photo: photo,  // Update photo URL
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+
+    });
+
     //product section
     app.get('/product', async (req, res) => {
       const page = parseInt(req.query.page);
@@ -216,13 +230,13 @@ async function run() {
       const result = await reviewCollection.insertOne(data)
       res.send(result)
     })
-    app.get('/reviews/:prodId', async (req, res) =>{
-      const prodId = req.params.prodId 
-      const query = {prodId : prodId}
+    app.get('/reviews/:prodId', async (req, res) => {
+      const prodId = req.params.prodId
+      const query = { prodId: prodId }
       const result = await reviewCollection.find(query).toArray()
       res.send(result)
-  })
-    
+    })
+
 
     //shippings section
     app.get('/shippings', async (req, res) => {
@@ -379,6 +393,9 @@ async function run() {
         revenue
       })
     })
+
+
+
 
 
 
