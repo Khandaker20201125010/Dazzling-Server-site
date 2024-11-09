@@ -90,6 +90,12 @@ async function run() {
       res.send(result)
 
     })
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email
+      const query = { email: email }
+      const result = await usersCollection.findOne(query)
+      res.send(result)
+    })
     app.post('/users', async (req, res) => {
       const user = req.body;
       const query = { email: user.email }
@@ -205,6 +211,18 @@ async function run() {
       const result = await reviewCollection.find().toArray();
       res.send(result)
     });
+    app.post('/reviews', async (req, res) => {
+      const data = req.body
+      const result = await reviewCollection.insertOne(data)
+      res.send(result)
+    })
+    app.get('/reviews/:prodId', async (req, res) =>{
+      const prodId = req.params.prodId 
+      const query = {prodId : prodId}
+      const result = await reviewCollection.find(query).toArray()
+      res.send(result)
+  })
+    
 
     //shippings section
     app.get('/shippings', async (req, res) => {
@@ -339,7 +357,7 @@ async function run() {
       }
     })
     //analytics or stats
-    app.get('/admin-stats',verifyToken,verifyAdmin, async (req, res) => {
+    app.get('/admin-stats', verifyToken, verifyAdmin, async (req, res) => {
       const users = await usersCollection.estimatedDocumentCount();
       const productItem = await productCollection.estimatedDocumentCount();
       const orders = await orderCollection.estimatedDocumentCount();
@@ -349,12 +367,12 @@ async function run() {
             _id: null,
             totalRevenue: {
               $sum: '$data.total'
-            } 
+            }
           }
         }
       ]).toArray();
-      const revenue = result.length > 0 ? result[0].totalRevenue : 0;  
-      res.send({ 
+      const revenue = result.length > 0 ? result[0].totalRevenue : 0;
+      res.send({
         users,
         productItem,
         orders,
