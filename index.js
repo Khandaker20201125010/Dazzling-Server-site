@@ -261,8 +261,8 @@ async function run() {
         total_amount: amount,
         currency: body?.currency,
         tran_id: tranId,
-        success_url: `http://localhost:5500/payment/success/${tranId}`,
-        fail_url: `http://localhost:5500/payment/fail/${tranId}`,
+        success_url: `https://dazzling-server.vercel.app/payment/success/${tranId}`,
+        fail_url: `https://dazzling-4b3ea.web.app/payment/fail/${tranId}`,
         cancel_url: 'http://localhost:3030/cancel',
         ipn_url: 'http://localhost:3030/ipn',
         shipping_method: 'Courier',
@@ -359,7 +359,7 @@ async function run() {
           };
           await cartsCollection.deleteMany(query);
         }
-        res.redirect(`http://localhost:5173/payment/success/${tranId}`)
+        res.redirect(`https://dazzling-4b3ea.web.app/payment/success/${tranId}`)
       }
     })
     // order delete when payment faile 
@@ -367,7 +367,7 @@ async function run() {
       const tranId = req.params.tranId
       const result = await orderCollection.deleteOne({ transactionId: tranId })
       if (result.deletedCount) {
-        res.redirect(`http://localhost:5173/payment/fail/${tranId}`)
+        res.redirect(`https://dazzling-4b3ea.web.app/payment/fail/${tranId}`)
       }
     })
     //analytics or stats
