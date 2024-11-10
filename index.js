@@ -262,7 +262,7 @@ async function run() {
         currency: body?.currency,
         tran_id: tranId,
         success_url: `https://dazzling-server.vercel.app/payment/success/${tranId}`,
-        fail_url: `https://dazzling-4b3ea.web.app/payment/fail/${tranId}`,
+        fail_url: `https://dazzling-server.vercel.app/payment/fail/${tranId}`,
         cancel_url: 'http://localhost:3030/cancel',
         ipn_url: 'http://localhost:3030/ipn',
         shipping_method: 'Courier',
